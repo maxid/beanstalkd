@@ -1,4 +1,4 @@
-#Golang beanstalkd client
+# Beanstalkd golang client
 
 ## INSTALL
 	go get github.com/maxid/beanstalkd
