@@ -9,6 +9,17 @@ import (
 	"time"
 )
 
+// dial & list-tubes & quit
+func TestListTubes(t *testing.T) {
+	queue := dial(t)
+	tubes, err := queue.ListTubes()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(fmt.Sprintf("%#v", tubes))
+	queue.Quit()
+}
+
 // dial & put & reserve & delete & quit
 func TestPut(t *testing.T) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -27,11 +38,7 @@ func TestReserve(t *testing.T) {
 
 // consumer
 func consumer(timeout int, t *testing.T) {
-	queue, err := Dial("127.0.0.1:11300")
-	if err != nil {
-		t.Fatal(err)
-		return
-	}
+	queue := dial(t)
 	for {
 		job, err := queue.Reserve(timeout)
 		if err != nil {
@@ -43,9 +50,9 @@ func consumer(timeout int, t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 			break
-		
+		}
 	}
-	err = queue.Quit()
+	err := queue.Quit()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,21 +60,27 @@ func consumer(timeout int, t *testing.T) {
 
 // producer
 func producer(size int, t *testing.T) {
-	queue, err := Dial("127.0.0.1:11300")
-	if err != nil {
-		t.Fatal(err)
-		return
-	}
+	queue := dial(t)
 	for i := 0; i < size; i++ {
-		_, err := queue.Put(1, 0*time.Second, 5*time.Second, []byte("test "+strconv.Itoa(i)))
+		_, err := queue.Put(1, 0*time.Second, 5*time.Second, []byte("hello world "+strconv.Itoa(i)))
 		if err != nil {
 			t.Fatal(err)
 			break
 		}
-		fmt.Println("put test " + strconv.Itoa(i))
+		fmt.Println("put hello world " + strconv.Itoa(i))
 	}
-	err = queue.Quit()
+	err := queue.Quit()
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+// dial
+func dial(t *testing.T) *BeanstalkdClient {
+	queue, err := Dial("127.0.0.1:11300")
+	if err != nil {
+		t.Fatal(err)
+		return nil
+	}
+	return queue
 }
