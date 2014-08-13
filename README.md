@@ -98,4 +98,4 @@ Latest release is v1.0 that contains API changes, see release notes [here](https
 
 ## Author
 
-* [Maxid Tseng](http://uscan.cn)
+* [Maxid Tseng](http://my.oschina.net/maxid/blog)
