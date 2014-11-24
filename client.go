@@ -20,6 +20,33 @@ func NewBeanstalkdJob(id uint64, data []byte) *BeanstalkdJob {
 	return &BeanstalkdJob{Id: id, Data: data}
 }
 
+// Client represents a connection to a Beanstalkd server.
+type Client interface {
+	Put(priority uint32, delay, ttr time.Duration, data []byte) (id uint64, err error)
+	Use(tube string) error
+	Reserve(seconds int) (*BeanstalkdJob, error)
+	Delete(id uint64) error
+	Release(id uint64, priority uint32, delay time.Duration) error
+	Bury(id uint64, priority uint32) error
+	Touch(id uint64) error
+	Watch(tube string) (int, error)
+	Ignore(tube string) (int, error)
+	Peek(id uint64) (*BeanstalkdJob, error)
+	PeekReady() (*BeanstalkdJob, error)
+	PeekDelayed() (*BeanstalkdJob, error)
+	PeekBuried() (*BeanstalkdJob, error)
+	Kick(bound int) (int, error)
+	KickJob(id uint64) error
+	StatsJob(id uint64) (map[string]string, error)
+	StatsTube(tube string) (map[string]string, error)
+	Stats() (map[string]string, error)
+	ListTubes() ([]string, error)
+	ListTubeUsed() (string, error)
+	ListTubesWatched() ([]string, error)
+	Quit()
+	PauseTube(tube string, delay int) error
+}
+
 var (
 	space      = []byte{' '}
 	crnl       = []byte{'\r', '\n'}
