@@ -262,12 +262,13 @@ func (this *pooledClient) Stats() (map[string]string, error)   { return this.con
 func (this *pooledClient) ListTubes() ([]string, error)        { return this.conn.ListTubes() }
 func (this *pooledClient) ListTubeUsed() (string, error)       { return this.conn.ListTubeUsed() }
 func (this *pooledClient) ListTubesWatched() ([]string, error) { return this.conn.ListTubesWatched() }
-func (this *pooledClient) Quit() {
+func (this *pooledClient) Quit() error {
 	conn := this.conn
 	if _, ok := conn.(errorClient); !ok {
 		this.conn = errorClient{errConnClosed}
-		this.pool.put(conn, false)
+		return this.pool.put(conn, false)
 	}
+	return nil
 }
 func (this *pooledClient) PauseTube(tube string, delay int) error { return nil }
 
@@ -299,5 +300,5 @@ func (this errorClient) Stats() (map[string]string, error)                { retu
 func (this errorClient) ListTubes() ([]string, error)                     { return nil, this.err }
 func (this errorClient) ListTubeUsed() (string, error)                    { return "", this.err }
 func (this errorClient) ListTubesWatched() ([]string, error)              { return nil, this.err }
-func (this errorClient) Quit()                                            {}
+func (this errorClient) Quit() error                                      { return this.err }
 func (this errorClient) PauseTube(tube string, delay int) error           { return this.err }
