@@ -43,7 +43,7 @@ type Client interface {
 	ListTubes() ([]string, error)
 	ListTubeUsed() (string, error)
 	ListTubesWatched() ([]string, error)
-	Quit()
+	Quit() error
 	PauseTube(tube string, delay int) error
 }
 
