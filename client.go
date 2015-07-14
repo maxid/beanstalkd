@@ -170,7 +170,7 @@ func (this *BeanstalkdClient) recvLine() (string, error) {
 }
 
 func (this *BeanstalkdClient) recvSlice() ([]byte, error) {
-	return this.reader.ReadSlice('\n')
+	return this.reader.ReadBytes('\n');
 }
 
 func (this *BeanstalkdClient) recvData(data []byte) (int, error) {
