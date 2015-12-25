@@ -8,6 +8,7 @@ import (
 	"net"
 	"strings"
 	"time"
+	"bytes"
 )
 
 // beanstalkd job
@@ -275,6 +276,15 @@ may be:
    or disconnect and try again later.
 */
 func (this *BeanstalkdClient) Put(priority uint32, delay, ttr time.Duration, data []byte) (id uint64, err error) {
+	// Strip off newline chars
+	// i.e. json.Encoder always appends \n
+	if bytes.HasSuffix(data, []byte("\r")) {
+		data = data[ :len(data)-1]
+	}
+	if bytes.HasSuffix(data, []byte("\n")) {
+		data = data[ :len(data)-1]
+	}
+
 	cmd := fmt.Sprintf("put %d %d %d %d\r\n", priority, uint64(delay.Seconds()), uint64(ttr.Seconds()), len(data))
 	cmd = cmd + string(data) + string(crnl)
 
