@@ -169,8 +169,21 @@ func (this *BeanstalkdClient) recvLine() (string, error) {
 	return this.reader.ReadString('\n')
 }
 
-func (this *BeanstalkdClient) recvSlice() ([]byte, error) {
-	return this.reader.ReadBytes('\n');
+func (this *BeanstalkdClient) recvSlice(dataLen int) ([]byte, error) {
+	buf := make([]byte, dataLen+2) // Add 2 for \r\n
+	pos := 0
+	for {
+		n, e := this.reader.Read(buf)
+		if e != nil {
+			return nil, e
+		}
+		pos += n
+		if pos >= dataLen {
+			// Read all data
+			break
+		}
+	}
+	return buf, nil
 }
 
 func (this *BeanstalkdClient) recvData(data []byte) (int, error) {
@@ -400,7 +413,7 @@ func (this *BeanstalkdClient) Reserve(seconds int) (*BeanstalkdJob, error) {
 		return nil, this.parseError(reply)
 	}
 
-	data, err := this.recvSlice()
+	data, err := this.recvSlice(dataLen)
 	if err != nil {
 		return nil, err
 	}
@@ -652,7 +665,7 @@ func (this *BeanstalkdClient) handlePeekReply(reply string) (*BeanstalkdJob, err
 	if err != nil {
 		return nil, errNotFound
 	}
-	data, err := this.recvSlice()
+	data, err := this.recvSlice(dataLen)
 	if err != nil {
 		return nil, err
 	}
