@@ -174,7 +174,7 @@ func (this *BeanstalkdClient) recvSlice(dataLen int) ([]byte, error) {
 	buf := make([]byte, dataLen+2) // Add 2 for \r\n
 	pos := 0
 	for {
-		n, e := this.reader.Read(buf)
+		n, e := this.reader.Read(buf[pos:])
 		if e != nil {
 			return nil, e
 		}
