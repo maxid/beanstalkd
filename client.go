@@ -8,6 +8,7 @@ import (
 	"net"
 	"strings"
 	"time"
+	"bytes"
 )
 
 // beanstalkd job
@@ -169,8 +170,21 @@ func (this *BeanstalkdClient) recvLine() (string, error) {
 	return this.reader.ReadString('\n')
 }
 
-func (this *BeanstalkdClient) recvSlice() ([]byte, error) {
-	return this.reader.ReadSlice('\n')
+func (this *BeanstalkdClient) recvSlice(dataLen int) ([]byte, error) {
+	buf := make([]byte, dataLen+2) // Add 2 for \r\n
+	pos := 0
+	for {
+		n, e := this.reader.Read(buf[pos:])
+		if e != nil {
+			return nil, e
+		}
+		pos += n
+		if pos >= dataLen {
+			// Read all data
+			break
+		}
+	}
+	return buf, nil
 }
 
 func (this *BeanstalkdClient) recvData(data []byte) (int, error) {
@@ -262,6 +276,15 @@ may be:
    or disconnect and try again later.
 */
 func (this *BeanstalkdClient) Put(priority uint32, delay, ttr time.Duration, data []byte) (id uint64, err error) {
+	// Strip off newline chars
+	// i.e. json.Encoder always appends \n
+	if bytes.HasSuffix(data, []byte("\r")) {
+		data = data[ :len(data)-1]
+	}
+	if bytes.HasSuffix(data, []byte("\n")) {
+		data = data[ :len(data)-1]
+	}
+
 	cmd := fmt.Sprintf("put %d %d %d %d\r\n", priority, uint64(delay.Seconds()), uint64(ttr.Seconds()), len(data))
 	cmd = cmd + string(data) + string(crnl)
 
@@ -400,7 +423,7 @@ func (this *BeanstalkdClient) Reserve(seconds int) (*BeanstalkdJob, error) {
 		return nil, this.parseError(reply)
 	}
 
-	data, err := this.recvSlice()
+	data, err := this.recvSlice(dataLen)
 	if err != nil {
 		return nil, err
 	}
@@ -652,7 +675,7 @@ func (this *BeanstalkdClient) handlePeekReply(reply string) (*BeanstalkdJob, err
 	if err != nil {
 		return nil, errNotFound
 	}
-	data, err := this.recvSlice()
+	data, err := this.recvSlice(dataLen)
 	if err != nil {
 		return nil, err
 	}
